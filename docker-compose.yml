@@ -1,0 +1,32 @@
+# 环形接驳板回流线配对 —— 编排文件
+#
+#   启动 Web 服务（宿主机端口可用 WEB_PORT 覆盖，默认 8080）：
+#     docker compose up -d web
+#     WEB_PORT=9000 docker compose up -d web
+#
+#   运行一次性验证（构建 + 测试 + HTTP 冒烟，退出码即结果）：
+#     docker compose run --rm verify
+#     # 或：docker compose up --exit-code-from verify verify
+
+services:
+  web:
+    build:
+      context: .
+      target: runtime
+    image: ring-chord-matcher-web
+    ports:
+      - "${WEB_PORT:-8080}:80"
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://127.0.0.1/healthz"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    restart: unless-stopped
+
+  verify:
+    build:
+      context: .
+      target: verify
+    image: ring-chord-matcher-verify
+    restart: "no"
